@@ -171,24 +171,8 @@ export function Spreadsheet({ onRangeSelect, workbookData }: SpreadsheetProps) {
   }, [onRangeSelect, workbookData]);
 
   return (
-    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{
-        backgroundColor: 'hsl(var(--muted) / 0.5)',
-        padding: '0.5rem 1rem',
-        fontSize: '0.75rem',
-        color: 'hsl(var(--muted-foreground))',
-        borderBottom: '1px solid hsl(var(--border))',
-        flexShrink: 0
-      }}>
-        Tip: Select cells in the spreadsheet, then press <kbd style={{ padding: '0.25rem 0.5rem', backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '0.25rem' }}>Ctrl+M</kbd> to create a mapping
-      </div>
-      <div
-        ref={containerRef}
-        style={{
-          flex: 1,
-          minHeight: 0
-        }}
-      />
+    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
     </div>
   );
 }
