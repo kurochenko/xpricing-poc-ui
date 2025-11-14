@@ -11,6 +11,14 @@ import { UniverSheetsUIPlugin } from '@univerjs/sheets-ui';
 import { UniverUIPlugin } from '@univerjs/ui';
 import type { CellRange } from '@/types';
 
+// Import locale data
+// @ts-ignore - locale files don't have type declarations
+import DesignEnUS from '@univerjs/design/lib/locale/en-US.js';
+// @ts-ignore
+import SheetsEnUS from '@univerjs/sheets/lib/locale/en-US.js';
+// @ts-ignore
+import SheetsUIEnUS from '@univerjs/sheets-ui/lib/locale/en-US.js';
+
 const DEFAULT_WORKBOOK: IWorkbookData = {
   id: 'xpricing-workbook',
   name: 'Sample Workbook',
@@ -86,10 +94,17 @@ export function Spreadsheet({ onRangeSelect, workbookData }: SpreadsheetProps) {
     containerRef.current.innerHTML = '';
 
     try {
-      // Initialize Univer
+      // Initialize Univer with locale data
       const univer = new Univer({
         theme: defaultTheme,
         locale: LocaleType.EN_US,
+        locales: {
+          [LocaleType.EN_US]: {
+            ...DesignEnUS,
+            ...SheetsEnUS,
+            ...SheetsUIEnUS,
+          },
+        },
       });
 
       // Register plugins
