@@ -1,23 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { Univer, UniverInstanceType, LocaleType, type IWorkbookData } from '@univerjs/core';
+import { LocaleType, type IWorkbookData } from '@univerjs/core';
 import { defaultTheme } from '@univerjs/design';
-import { UniverDocsPlugin } from '@univerjs/docs';
-import { UniverDocsUIPlugin } from '@univerjs/docs-ui';
-import { UniverFormulaEnginePlugin } from '@univerjs/engine-formula';
-import { UniverRenderEnginePlugin } from '@univerjs/engine-render';
-import { UniverSheetsPlugin } from '@univerjs/sheets';
-import { UniverSheetsFormulaPlugin } from '@univerjs/sheets-formula';
-import { UniverSheetsUIPlugin } from '@univerjs/sheets-ui';
-import { UniverUIPlugin } from '@univerjs/ui';
+import { UniverSheetsCorePreset } from '@univerjs/presets';
+import { UniverSheetsFilterPreset } from '@univerjs/presets/preset-sheets-filter';
 import type { CellRange } from '@/types';
 
-// Import locale data
-// @ts-ignore - locale files don't have type declarations
-import DesignEnUS from '@univerjs/design/lib/locale/en-US.js';
-// @ts-ignore
-import SheetsEnUS from '@univerjs/sheets/lib/locale/en-US.js';
-// @ts-ignore
-import SheetsUIEnUS from '@univerjs/sheets-ui/lib/locale/en-US.js';
+import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 
 const DEFAULT_WORKBOOK: IWorkbookData = {
   id: 'xpricing-workbook',
@@ -69,73 +57,52 @@ interface SpreadsheetProps {
 
 export function Spreadsheet({ onRangeSelect, workbookData }: SpreadsheetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const univerRef = useRef<Univer | null>(null);
+  const univerRef = useRef<any>(null);
 
   useEffect(() => {
     if (!containerRef.current) {
-      console.log('Container ref not available');
+      console.log('[Univer] Container ref not available');
       return;
     }
 
-    console.log('Initializing UniverJS...');
+    console.log('[Univer] Initializing with Presets API...');
 
     // Clean up existing instance
     if (univerRef.current) {
-      console.log('Disposing existing UniverJS instance');
+      console.log('[Univer] Disposing existing instance');
       try {
         univerRef.current.dispose();
       } catch (e) {
-        console.error('Error disposing UniverJS:', e);
+        console.error('[Univer] Error disposing:', e);
       }
       univerRef.current = null;
     }
 
     // Wait a tick to ensure cleanup is complete
-    const timeoutId = setTimeout(() => {
-      if (!containerRef.current) return;
+    const timeoutId = setTimeout(async () => {
+      if (!containerRef.current) {
+        console.warn('[Univer] Container ref lost');
+        return;
+      }
 
       try {
-        // Initialize Univer with locale data
-        const univer = new Univer({
-          theme: defaultTheme,
-          locale: LocaleType.EN_US,
-          locales: {
-            [LocaleType.EN_US]: {
-              ...DesignEnUS,
-              ...SheetsEnUS,
-              ...SheetsUIEnUS,
-            },
-          },
-        });
+        console.log('[Univer] Creating preset instance...');
 
-        // Register plugins
-        univer.registerPlugin(UniverRenderEnginePlugin);
-        univer.registerPlugin(UniverUIPlugin, {
+        // Use the modern Presets API
+        const { univerAPI } = UniverSheetsCorePreset({
           container: containerRef.current,
-          header: true,
-          toolbar: true,
-          footer: true,
+          workbook: workbookData || DEFAULT_WORKBOOK,
         });
-        univer.registerPlugin(UniverDocsPlugin, {
-          hasScroll: false,
-        });
-        univer.registerPlugin(UniverDocsUIPlugin);
-        univer.registerPlugin(UniverSheetsPlugin);
-        univer.registerPlugin(UniverSheetsUIPlugin);
-        univer.registerPlugin(UniverFormulaEnginePlugin);
-        univer.registerPlugin(UniverSheetsFormulaPlugin);
 
-        // Create workbook from data or use default
-        const dataToLoad = workbookData || DEFAULT_WORKBOOK;
-        console.log('Loading workbook:', dataToLoad.name, 'with', Object.keys(dataToLoad.sheets).length, 'sheets');
-        univer.createUnit(UniverInstanceType.UNIVER_SHEET, dataToLoad);
-
-        univerRef.current = univer;
-        console.log('UniverJS initialized successfully');
+        univerRef.current = univerAPI;
+        console.log('[Univer] Preset initialized successfully');
       } catch (error) {
-        console.error('Error initializing UniverJS:', error);
+        console.error('[Univer] Initialization error:', error);
+        if (error instanceof Error) {
+          console.error('[Univer] Error stack:', error.stack);
+        }
       }
-    }, 0);
+    }, 100);
 
     // For the PoC, we'll use a keyboard shortcut to trigger selection
     // Users can select a range and press Ctrl+M to map it
