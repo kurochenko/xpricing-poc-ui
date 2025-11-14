@@ -64,42 +64,61 @@ export function Spreadsheet({ onRangeSelect, workbookData }: SpreadsheetProps) {
   const univerRef = useRef<Univer | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) {
+      console.log('Container ref not available');
+      return;
+    }
+
+    console.log('Initializing UniverJS...');
 
     // Clean up existing instance
     if (univerRef.current) {
-      univerRef.current.dispose();
+      console.log('Disposing existing UniverJS instance');
+      try {
+        univerRef.current.dispose();
+      } catch (e) {
+        console.error('Error disposing UniverJS:', e);
+      }
       univerRef.current = null;
     }
 
-    // Initialize Univer
-    const univer = new Univer({
-      theme: defaultTheme,
-      locale: LocaleType.EN_US,
-    });
+    // Clear the container
+    containerRef.current.innerHTML = '';
 
-    // Register plugins
-    univer.registerPlugin(UniverRenderEnginePlugin);
-    univer.registerPlugin(UniverUIPlugin, {
-      container: containerRef.current,
-      header: true,
-      toolbar: true,
-      footer: true,
-    });
-    univer.registerPlugin(UniverDocsPlugin, {
-      hasScroll: false,
-    });
-    univer.registerPlugin(UniverDocsUIPlugin);
-    univer.registerPlugin(UniverSheetsPlugin);
-    univer.registerPlugin(UniverSheetsUIPlugin);
-    univer.registerPlugin(UniverFormulaEnginePlugin);
-    univer.registerPlugin(UniverSheetsFormulaPlugin);
+    try {
+      // Initialize Univer
+      const univer = new Univer({
+        theme: defaultTheme,
+        locale: LocaleType.EN_US,
+      });
 
-    // Create workbook from data or use default
-    const dataToLoad = workbookData || DEFAULT_WORKBOOK;
-    univer.createUnit(UniverInstanceType.UNIVER_SHEET, dataToLoad);
+      // Register plugins
+      univer.registerPlugin(UniverRenderEnginePlugin);
+      univer.registerPlugin(UniverUIPlugin, {
+        container: containerRef.current,
+        header: true,
+        toolbar: true,
+        footer: true,
+      });
+      univer.registerPlugin(UniverDocsPlugin, {
+        hasScroll: false,
+      });
+      univer.registerPlugin(UniverDocsUIPlugin);
+      univer.registerPlugin(UniverSheetsPlugin);
+      univer.registerPlugin(UniverSheetsUIPlugin);
+      univer.registerPlugin(UniverFormulaEnginePlugin);
+      univer.registerPlugin(UniverSheetsFormulaPlugin);
 
-    univerRef.current = univer;
+      // Create workbook from data or use default
+      const dataToLoad = workbookData || DEFAULT_WORKBOOK;
+      console.log('Loading workbook:', dataToLoad.name, 'with', Object.keys(dataToLoad.sheets).length, 'sheets');
+      univer.createUnit(UniverInstanceType.UNIVER_SHEET, dataToLoad);
+
+      univerRef.current = univer;
+      console.log('UniverJS initialized successfully');
+    } catch (error) {
+      console.error('Error initializing UniverJS:', error);
+    }
 
     // For the PoC, we'll use a keyboard shortcut to trigger selection
     // Users can select a range and press Ctrl+M to map it
@@ -123,7 +142,13 @@ export function Spreadsheet({ onRangeSelect, workbookData }: SpreadsheetProps) {
     // Cleanup
     return () => {
       document.removeEventListener('keydown', handleKeyPress);
-      univer.dispose();
+      if (univerRef.current) {
+        try {
+          univerRef.current.dispose();
+        } catch (e) {
+          console.error('Error during cleanup:', e);
+        }
+      }
     };
   }, [onRangeSelect, workbookData]);
 
@@ -135,7 +160,12 @@ export function Spreadsheet({ onRangeSelect, workbookData }: SpreadsheetProps) {
       <div
         ref={containerRef}
         className="flex-1 relative"
-        style={{ minHeight: '600px' }}
+        style={{
+          width: '100%',
+          height: '100%',
+          minHeight: '600px',
+          overflow: 'hidden'
+        }}
       />
     </div>
   );
