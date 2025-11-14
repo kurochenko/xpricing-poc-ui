@@ -90,50 +90,52 @@ export function Spreadsheet({ onRangeSelect, workbookData }: SpreadsheetProps) {
       univerRef.current = null;
     }
 
-    // Clear the container
-    containerRef.current.innerHTML = '';
+    // Wait a tick to ensure cleanup is complete
+    const timeoutId = setTimeout(() => {
+      if (!containerRef.current) return;
 
-    try {
-      // Initialize Univer with locale data
-      const univer = new Univer({
-        theme: defaultTheme,
-        locale: LocaleType.EN_US,
-        locales: {
-          [LocaleType.EN_US]: {
-            ...DesignEnUS,
-            ...SheetsEnUS,
-            ...SheetsUIEnUS,
+      try {
+        // Initialize Univer with locale data
+        const univer = new Univer({
+          theme: defaultTheme,
+          locale: LocaleType.EN_US,
+          locales: {
+            [LocaleType.EN_US]: {
+              ...DesignEnUS,
+              ...SheetsEnUS,
+              ...SheetsUIEnUS,
+            },
           },
-        },
-      });
+        });
 
-      // Register plugins
-      univer.registerPlugin(UniverRenderEnginePlugin);
-      univer.registerPlugin(UniverUIPlugin, {
-        container: containerRef.current,
-        header: true,
-        toolbar: true,
-        footer: true,
-      });
-      univer.registerPlugin(UniverDocsPlugin, {
-        hasScroll: false,
-      });
-      univer.registerPlugin(UniverDocsUIPlugin);
-      univer.registerPlugin(UniverSheetsPlugin);
-      univer.registerPlugin(UniverSheetsUIPlugin);
-      univer.registerPlugin(UniverFormulaEnginePlugin);
-      univer.registerPlugin(UniverSheetsFormulaPlugin);
+        // Register plugins
+        univer.registerPlugin(UniverRenderEnginePlugin);
+        univer.registerPlugin(UniverUIPlugin, {
+          container: containerRef.current,
+          header: true,
+          toolbar: true,
+          footer: true,
+        });
+        univer.registerPlugin(UniverDocsPlugin, {
+          hasScroll: false,
+        });
+        univer.registerPlugin(UniverDocsUIPlugin);
+        univer.registerPlugin(UniverSheetsPlugin);
+        univer.registerPlugin(UniverSheetsUIPlugin);
+        univer.registerPlugin(UniverFormulaEnginePlugin);
+        univer.registerPlugin(UniverSheetsFormulaPlugin);
 
-      // Create workbook from data or use default
-      const dataToLoad = workbookData || DEFAULT_WORKBOOK;
-      console.log('Loading workbook:', dataToLoad.name, 'with', Object.keys(dataToLoad.sheets).length, 'sheets');
-      univer.createUnit(UniverInstanceType.UNIVER_SHEET, dataToLoad);
+        // Create workbook from data or use default
+        const dataToLoad = workbookData || DEFAULT_WORKBOOK;
+        console.log('Loading workbook:', dataToLoad.name, 'with', Object.keys(dataToLoad.sheets).length, 'sheets');
+        univer.createUnit(UniverInstanceType.UNIVER_SHEET, dataToLoad);
 
-      univerRef.current = univer;
-      console.log('UniverJS initialized successfully');
-    } catch (error) {
-      console.error('Error initializing UniverJS:', error);
-    }
+        univerRef.current = univer;
+        console.log('UniverJS initialized successfully');
+      } catch (error) {
+        console.error('Error initializing UniverJS:', error);
+      }
+    }, 0);
 
     // For the PoC, we'll use a keyboard shortcut to trigger selection
     // Users can select a range and press Ctrl+M to map it
@@ -156,6 +158,7 @@ export function Spreadsheet({ onRangeSelect, workbookData }: SpreadsheetProps) {
 
     // Cleanup
     return () => {
+      clearTimeout(timeoutId);
       document.removeEventListener('keydown', handleKeyPress);
       if (univerRef.current) {
         try {
