@@ -1,12 +1,15 @@
 import { useState, useCallback } from 'react';
+import type { IWorkbookData } from '@univerjs/core';
 import { Spreadsheet } from '@/components/spreadsheet/Spreadsheet';
 import { ToolPanel } from '@/components/spreadsheet/ToolPanel';
 import { APISidebar } from '@/components/spreadsheet/APISidebar';
+import { FileUpload } from '@/components/ui/file-upload';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { CellRange, RangeMapping, ArrayOrientation } from '@/types';
+import { parseExcelFile } from '@/utils/excelParser';
 
 function App() {
   const [toolPanelPosition, setToolPanelPosition] = useState({ x: 0, y: 0 });
@@ -15,6 +18,8 @@ function App() {
   const [mappings, setMappings] = useState<RangeMapping[]>([]);
   const [isInput, setIsInput] = useState(true);
   const [mappingName, setMappingName] = useState('');
+  const [workbookData, setWorkbookData] = useState<IWorkbookData | null>(null);
+  const [fileName, setFileName] = useState<string>('');
 
   const handleRangeSelect = useCallback((range: CellRange) => {
 
@@ -176,6 +181,29 @@ function App() {
     setCurrentMapping(null);
   }, []);
 
+  const handleFileSelect = useCallback(async (file: File) => {
+    try {
+      const data = await parseExcelFile(file);
+      setWorkbookData(data);
+      setFileName(file.name);
+      // Clear existing mappings when loading new file
+      setMappings([]);
+      setShowToolPanel(false);
+      setCurrentMapping(null);
+    } catch (error) {
+      console.error('Error parsing Excel file:', error);
+      alert('Failed to load Excel file. Please ensure it is a valid .xlsx or .xls file.');
+    }
+  }, []);
+
+  const handleClearFile = useCallback(() => {
+    setWorkbookData(null);
+    setFileName('');
+    setMappings([]);
+    setShowToolPanel(false);
+    setCurrentMapping(null);
+  }, []);
+
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
@@ -188,6 +216,14 @@ function App() {
             </p>
           </div>
           <div className="flex items-center gap-4">
+            {/* File Upload */}
+            <div className="w-80">
+              <FileUpload
+                onFileSelect={handleFileSelect}
+                currentFileName={fileName}
+                onClear={handleClearFile}
+              />
+            </div>
             {currentMapping && (
               <Card className="border-primary">
                 <CardContent className="p-4 flex items-center gap-4">
@@ -240,7 +276,10 @@ function App() {
       <div className="flex-1 flex overflow-hidden">
         {/* Spreadsheet Area */}
         <div className="flex-1 relative">
-          <Spreadsheet onRangeSelect={handleRangeSelect} />
+          <Spreadsheet
+            onRangeSelect={handleRangeSelect}
+            workbookData={workbookData}
+          />
 
           {/* Tool Panel */}
           {showToolPanel && currentMapping && (

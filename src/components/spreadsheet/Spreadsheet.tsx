@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Univer, UniverInstanceType, LocaleType } from '@univerjs/core';
+import { Univer, UniverInstanceType, LocaleType, type IWorkbookData } from '@univerjs/core';
 import { defaultTheme } from '@univerjs/design';
 import { UniverDocsPlugin } from '@univerjs/docs';
 import { UniverDocsUIPlugin } from '@univerjs/docs-ui';
@@ -11,16 +11,66 @@ import { UniverSheetsUIPlugin } from '@univerjs/sheets-ui';
 import { UniverUIPlugin } from '@univerjs/ui';
 import type { CellRange } from '@/types';
 
+const DEFAULT_WORKBOOK: IWorkbookData = {
+  id: 'xpricing-workbook',
+  name: 'Sample Workbook',
+  appVersion: '0.1.0',
+  locale: LocaleType.EN_US,
+  styles: {},
+  sheetOrder: ['sheet-1'],
+  sheets: {
+    'sheet-1': {
+      id: 'sheet-1',
+      name: 'Sample Data',
+      cellData: {
+        0: {
+          0: { v: 'Product' },
+          1: { v: 'Quantity' },
+          2: { v: 'Price' },
+          3: { v: 'Total' },
+        },
+        1: {
+          0: { v: 'Item A' },
+          1: { v: 10 },
+          2: { v: 25.5 },
+          3: { v: 255, f: '=B2*C2' },
+        },
+        2: {
+          0: { v: 'Item B' },
+          1: { v: 5 },
+          2: { v: 42.0 },
+          3: { v: 210, f: '=B3*C3' },
+        },
+        3: {
+          0: { v: 'Item C' },
+          1: { v: 8 },
+          2: { v: 15.75 },
+          3: { v: 126, f: '=B4*C4' },
+        },
+      },
+      rowCount: 100,
+      columnCount: 20,
+    },
+  },
+};
+
 interface SpreadsheetProps {
   onRangeSelect?: (range: CellRange) => void;
+  workbookData?: IWorkbookData | null;
 }
 
-export function Spreadsheet({ onRangeSelect }: SpreadsheetProps) {
+export function Spreadsheet({ onRangeSelect, workbookData }: SpreadsheetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const univerRef = useRef<Univer | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
+
+    // Clean up existing instance
+    if (univerRef.current) {
+      univerRef.current.dispose();
+      univerRef.current = null;
+    }
 
     // Initialize Univer
     const univer = new Univer({
@@ -45,46 +95,9 @@ export function Spreadsheet({ onRangeSelect }: SpreadsheetProps) {
     univer.registerPlugin(UniverFormulaEnginePlugin);
     univer.registerPlugin(UniverSheetsFormulaPlugin);
 
-    // Create a workbook with sample data
-    univer.createUnit(UniverInstanceType.UNIVER_SHEET, {
-      id: 'xpricing-workbook',
-      name: 'XPricing PoC',
-      sheetOrder: ['sheet-1'],
-      sheets: {
-        'sheet-1': {
-          id: 'sheet-1',
-          name: 'Sample Data',
-          cellData: {
-            0: {
-              0: { v: 'Product' },
-              1: { v: 'Quantity' },
-              2: { v: 'Price' },
-              3: { v: 'Total' },
-            },
-            1: {
-              0: { v: 'Item A' },
-              1: { v: 10 },
-              2: { v: 25.5 },
-              3: { v: 255, f: '=B2*C2' },
-            },
-            2: {
-              0: { v: 'Item B' },
-              1: { v: 5 },
-              2: { v: 42.0 },
-              3: { v: 210, f: '=B3*C3' },
-            },
-            3: {
-              0: { v: 'Item C' },
-              1: { v: 8 },
-              2: { v: 15.75 },
-              3: { v: 126, f: '=B4*C4' },
-            },
-          },
-          rowCount: 100,
-          columnCount: 20,
-        },
-      },
-    });
+    // Create workbook from data or use default
+    const dataToLoad = workbookData || DEFAULT_WORKBOOK;
+    univer.createUnit(UniverInstanceType.UNIVER_SHEET, dataToLoad);
 
     univerRef.current = univer;
 
@@ -112,7 +125,7 @@ export function Spreadsheet({ onRangeSelect }: SpreadsheetProps) {
       document.removeEventListener('keydown', handleKeyPress);
       univer.dispose();
     };
-  }, [onRangeSelect]);
+  }, [onRangeSelect, workbookData]);
 
   return (
     <div className="w-full h-full flex flex-col">
