@@ -205,9 +205,9 @@ function App() {
   }, []);
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-full flex flex-col">
       {/* Header */}
-      <header className="border-b bg-background px-6 py-4">
+      <header className="border-b bg-background px-6 py-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">XPricing PoC</h1>

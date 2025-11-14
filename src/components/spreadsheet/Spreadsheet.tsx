@@ -171,18 +171,22 @@ export function Spreadsheet({ onRangeSelect, workbookData }: SpreadsheetProps) {
   }, [onRangeSelect, workbookData]);
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="bg-muted/50 px-4 py-2 text-xs text-muted-foreground border-b">
-        Tip: Select cells in the spreadsheet, then press <kbd className="px-2 py-1 bg-background border rounded">Ctrl+M</kbd> to create a mapping
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div style={{
+        backgroundColor: 'hsl(var(--muted) / 0.5)',
+        padding: '0.5rem 1rem',
+        fontSize: '0.75rem',
+        color: 'hsl(var(--muted-foreground))',
+        borderBottom: '1px solid hsl(var(--border))',
+        flexShrink: 0
+      }}>
+        Tip: Select cells in the spreadsheet, then press <kbd style={{ padding: '0.25rem 0.5rem', backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '0.25rem' }}>Ctrl+M</kbd> to create a mapping
       </div>
       <div
         ref={containerRef}
-        className="flex-1 relative"
         style={{
-          width: '100%',
-          height: '100%',
-          minHeight: '600px',
-          overflow: 'hidden'
+          flex: 1,
+          minHeight: 0
         }}
       />
     </div>
